@@ -75,7 +75,7 @@ public:
             throw std::invalid_argument("You are trying to create matrix with 0 rows or 0 colums.");
         }
         AllocateMatrixStorage(rows, colms);
-        for (size_t i = 0; i < rows * colms; ++i) {
+        for (size_t i = 0; i != rows * colms; ++i) {
             ptr_[i] = def_elem;
         }
     }
@@ -87,7 +87,7 @@ public:
         if (!ptr_) {
             return;
         }
-        for (size_t i = 0; i < rows_num_ * cols_num_; ++i) {
+        for (size_t i = 0; i != rows_num_ * cols_num_; ++i) {
             ptr_[i] = other.ptr_[i];
         }
     }

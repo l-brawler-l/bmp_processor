@@ -1,30 +1,34 @@
 #ifndef IMG_PROC_EDGE_H
 #define IMG_PROC_EDGE_H
 
-#include <charconv>
+#include <cstdlib>
+#include <memory>
+#include "cmd_line_parser.h"
 #include "filter.h"
 #include "grayscale.h"
+
+using namespace std::literals;
 
 class EdgeFilter : public Filter {
 public:
     ~EdgeFilter() override {
-        delete gs_filter_;
     }
     explicit EdgeFilter(const FilterDescriptor& fd) {
         if (fd.GetFilterName() != "edge") {
-            throw std::exception();
+            throw std::runtime_error("Filter descriptor has incorrect name");
         }
         if (fd.GetFilterParams().size() != 1) {
-            throw std::exception();
+            throw std::invalid_argument("Incorrect count of parameters for edge filter.");
         }
-        threshold_ = MakeFloat(fd.GetFilterParams()[0]);
-        gs_filter_ = new GsFilter{{"gs", {}}};
+        threshold_ = MakeDouble(fd.GetFilterParams()[0]);
+        FilterDescriptor gs_fd = {"gs"sv, {}};
+        gs_filter_ = std::make_shared<GsFilter>(gs_fd);
     }
     void Apply(Bmp& bmp) override {
         gs_filter_->Apply(bmp);
         Matrix<BGR> new_data{bmp.data.GetRowsNum(), bmp.data.GetColsNum(), {}};
-        for (size_t i = 0; i < bmp.data.GetRowsNum(); ++i) {
-            for (size_t j = 0; j < bmp.data.GetColsNum(); ++j) {
+        for (size_t i = 0; i != bmp.data.GetRowsNum(); ++i) {
+            for (size_t j = 0; j != bmp.data.GetColsNum(); ++j) {
                 new_data.At(i, j) = bmp.data.At(i, j) * coef_[1][1];
                 new_data.At(i, j) += bmp.data.At(i == 0 ? 0 : i - 1, j) * coef_[0][1];
                 new_data.At(i, j) += bmp.data.At(i == (bmp.data.GetRowsNum() - 1) ? i : i + 1, j) * coef_[2][1];
@@ -37,11 +41,11 @@ public:
     }
 
 private:
-    float MakeFloat(std::string_view str) {
-        float maybe = 0;
-        auto result = std::from_chars(str.data(), str.data() + str.size(), maybe);
-        if (result.ec == std::errc::invalid_argument) {
-            throw std::exception();
+    double MakeDouble(std::string_view str) {
+        char * end;
+        double maybe = std::strtod(str.data(), &end);
+        if (end != str.data() + str.size()) {
+            throw std::invalid_argument("Parameters for edge filter must be double.");
         }
         return maybe;
     }
@@ -53,14 +57,13 @@ private:
     }
 
 private:
-    float threshold_;
-    const float coef_[3][3] = {{0, -1, 0}, {-1, 4, -1}, {0, -1, 0}};
-    GsFilter* gs_filter_;
+    double threshold_;
+    const double coef_[3][3] = {{0, -1, 0}, {-1, 4, -1}, {0, -1, 0}};
+    std::shared_ptr<GsFilter> gs_filter_;
 };
 
-Filter* EdgeFilterMaker(const FilterDescriptor& fd) {
-    Filter* pointer = new EdgeFilter{fd};
-    return pointer;
+inline std::shared_ptr<Filter> EdgeFilterMaker(const FilterDescriptor& fd) {
+    return std::make_shared<EdgeFilter>(fd);
 }
 
 #endif

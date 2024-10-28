@@ -35,6 +35,7 @@ project(image_processor)
 add_executable(
     image_processor
     image_processor.cpp
+    cmd_line_parser.cpp
     cmd_line_parser.h
     bmp.h
     filter.h

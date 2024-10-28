@@ -3,7 +3,8 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <exception>
+#include <memory>
+#include <stdexcept>
 #include <string_view>
 #include <charconv>
 
@@ -13,15 +14,15 @@ class CropFilter : public Filter {
 public:
     explicit CropFilter(const FilterDescriptor& fd) {
         if (fd.GetFilterName() != "crop") {
-            throw std::exception();
+            throw std::runtime_error("Filter descriptor has incorrect name");
         }
         if (fd.GetFilterParams().size() != 2) {
-            throw std::exception();
+            throw std::invalid_argument("Incorrect count of parameters for crop filter.");
         }
         width_ = MakeInteger(fd.GetFilterParams()[0]);
         height_ = MakeInteger(fd.GetFilterParams()[1]);
         if (width_ <= 0 || height_ <= 0) {
-            throw std::exception();
+            throw std::invalid_argument("Parameters for crop filter must be positive integers.");
         }
     }
     void Apply(Bmp& bmp) override {
@@ -32,8 +33,8 @@ public:
             width_ = bmp.data.GetColsNum();
         }
         Matrix<BGR> new_data{height_, width_, {}};
-        for (size_t i = 0; i < height_; ++i) {
-            for (size_t j = 0; j < width_; ++j) {
+        for (size_t i = 0; i != static_cast<size_t>(height_); ++i) {
+            for (size_t j = 0; j != static_cast<size_t>(width_); ++j) {
                 new_data.At(i, j) = bmp.data.At(i + bmp.data.GetRowsNum() - height_, j);  //!!!!!
             }
         }
@@ -50,7 +51,7 @@ private:
         uint32_t maybe = 0;
         auto result = std::from_chars(str.data(), str.data() + str.size(), maybe);
         if (result.ec == std::errc::invalid_argument) {
-            throw std::exception();
+            throw std::invalid_argument("Patameters for crop filter must be positive integers.");
         }
         return maybe;
     }
@@ -60,9 +61,8 @@ private:
     uint32_t height_;
 };
 
-Filter* CropFilterMaker(const FilterDescriptor& fd) {
-    Filter* pointer = new CropFilter{fd};
-    return pointer;
+inline std::shared_ptr<Filter> CropFilterMaker(const FilterDescriptor& fd) {
+    return std::make_shared<CropFilter>(fd);
 }
 
 #endif

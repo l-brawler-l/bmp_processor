@@ -3,6 +3,7 @@
 
 #include "bmp.h"
 #include "cmd_line_parser.h"
+#include <memory>
 #include <stdexcept>
 #include <vector>
 #include <map>
@@ -10,7 +11,7 @@
 class Filter {
 public:
     virtual void Apply(Bmp& bmp) = 0;
-    virtual ~Filter(){};  // TODO: исправить на protected
+    virtual ~Filter(){};
 };
 
 class FilterPipeline {
@@ -18,16 +19,13 @@ public:
     FilterPipeline() {
     }
 
-    explicit FilterPipeline(const std::vector<Filter*>& fp) : fp_{fp} {
+    explicit FilterPipeline(const std::vector<std::shared_ptr<Filter>>& fp) : fp_{fp} {
     }
 
     ~FilterPipeline() {
-        for (Filter* filter : fp_) {
-            delete filter;
-        }
     }
 
-    void AddFilter(Filter* filter) {
+    void AddFilter(std::shared_ptr<Filter> filter) {
         fp_.push_back(filter);
     }
 
@@ -36,34 +34,34 @@ public:
     }
 
     void ApplyFilters(Bmp& bmp) {
-        for (Filter* filter : fp_) {
+        for (std::shared_ptr<Filter> filter : fp_) {
             filter->Apply(bmp);
         }
     }
 
-    Filter* operator[](size_t ind) {
+    std::shared_ptr<Filter> operator[](size_t ind) {
         return fp_[ind];
     }
-    const Filter* const operator[](size_t ind) const {
+    const std::shared_ptr<Filter const> operator[](size_t ind) const {
         return fp_[ind];
     }
 
-    Filter* At(size_t ind) {
+    std::shared_ptr<Filter> At(size_t ind) {
         return fp_.at(ind);
     }
-    const Filter* const At(size_t ind) const {
+    const std::shared_ptr<Filter const> At(size_t ind) const {
         return fp_.at(ind);
     }
 
-    const std::vector<Filter*>& GetFilter() const {
+    const std::vector<std::shared_ptr<Filter>>& GetFilter() const {
         return fp_;
     }
 
 private:
-    std::vector<Filter*> fp_;
+    std::vector<std::shared_ptr<Filter>> fp_;
 };
 
-using PFitlerProducer = Filter* (*)(const FilterDescriptor& fd);
+using PFitlerProducer = std::shared_ptr<Filter> (*)(const FilterDescriptor& fd);
 
 class FilterFactory {
 public:
@@ -87,22 +85,22 @@ public:
         }
         filter_producers_.erase(name);
     }
-    Filter* MakeFilter(const FilterDescriptor& fd) {
+    std::shared_ptr<Filter> MakeFilter(const FilterDescriptor& fd) {
         if (!IsInFilterProducers(fd.GetFilterName())) {
             throw std::invalid_argument("No registred filter producers for this filter descriptor.");
         }
         PFitlerProducer make_filter = filter_producers_[fd.GetFilterName()];
-        Filter* filter = make_filter(fd);
+        std::shared_ptr<Filter> filter = make_filter(fd);
         if (!filter) {
             throw std::invalid_argument("Parameters of this filter descriptor are incorrect.");
         }
         return filter;
     }
 
-    FilterPipeline* MakePipeline(const std::vector<FilterDescriptor>& fds) {
-        FilterPipeline* fp = new FilterPipeline();
+    std::unique_ptr<FilterPipeline> MakePipeline(const std::vector<FilterDescriptor>& fds) {
+        std::unique_ptr<FilterPipeline> fp(new FilterPipeline());
         for (const FilterDescriptor& fd : fds) {
-            Filter* filter = MakeFilter(fd);
+            std::shared_ptr<Filter> filter = MakeFilter(fd);
             if (!filter) {
                 throw std::invalid_argument(
                     "You cannot create a filter for this filter descriptor, because either the parameters are "

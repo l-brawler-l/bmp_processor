@@ -7,7 +7,6 @@
 
 #include <cmath>
 #include <cstdint>
-#include <exception>
 #include <fstream>
 #include <iostream>
 #include <cstddef>
@@ -16,20 +15,6 @@
 // В оперативной памяти большинства архитектур хранятся в формате little-endian (младшие байты по младшим адресам).
 // Например, число 298 будет храниться в виде 4 байт в шестнадцатиричной нотации: 2A 01 00 00.
 // В bmp файле числа хранятся тоже в little-endian, поэтому мы можем читать их и записывать непосредственно.
-
-// struct IntBGR {
-//     uint8_t blue;
-//     uint8_t green;
-//     uint8_t red;
-
-//     explicit IntBGR(const FloatBGR& float_bgr)
-//         : blue(static_cast<uint8_t>(round(float_bgr.blue)))
-//         , green(static_cast<uint8_t>(round(float_bgr.green)))
-//         , red(static_cast<uint8_t>(round(float_bgr.red)))
-//     {
-//     }
-
-// } __attribute__((packed));
 
 struct Consts {
     enum constants : const uint8_t {
@@ -62,26 +47,26 @@ struct IntBGR {
 };
 
 struct BGR {
-    float blue;
-    float green;
-    float red;
+    double blue;
+    double green;
+    double red;
 
     BGR() : blue(0), green(0), red(0) {
     }
 
-    BGR(float b, float g, float r) : blue(b), green(g), red(r) {
+    BGR(double b, double g, double r) : blue(b), green(g), red(r) {
     }
 
     explicit BGR(IntBGR int_bgr)
-        : blue(static_cast<float>(int_bgr.blue) / static_cast<float>(Consts::two_five_five)),
-          green(static_cast<float>(int_bgr.green) / static_cast<float>(Consts::two_five_five)),
-          red(static_cast<float>(int_bgr.red) / static_cast<float>(Consts::two_five_five)) {
+        : blue(static_cast<double>(int_bgr.blue) / static_cast<double>(Consts::two_five_five)),
+          green(static_cast<double>(int_bgr.green) / static_cast<double>(Consts::two_five_five)),
+          red(static_cast<double>(int_bgr.red) / static_cast<double>(Consts::two_five_five)) {
     }
 
     IntBGR ToInt() const {
-        IntBGR result{static_cast<uint8_t>(round(blue * static_cast<float>(Consts::two_five_five))),
-                      static_cast<uint8_t>(round(green * static_cast<float>(Consts::two_five_five))),
-                      static_cast<uint8_t>(round(red * static_cast<float>(Consts::two_five_five)))};
+        IntBGR result{static_cast<uint8_t>(round(blue * static_cast<double>(Consts::two_five_five))),
+                      static_cast<uint8_t>(round(green * static_cast<double>(Consts::two_five_five))),
+                      static_cast<uint8_t>(round(red * static_cast<double>(Consts::two_five_five)))};
         return result;
     }
 
@@ -109,7 +94,7 @@ struct BGR {
         return lhs;
     }
 
-    friend BGR& operator*=(BGR& lhs, float rhs) {
+    friend BGR& operator*=(BGR& lhs, double rhs) {
         lhs.blue *= rhs;
         lhs.green *= rhs;
         lhs.red *= rhs;
@@ -117,19 +102,19 @@ struct BGR {
     }
 };  // __attribute__((packed));
 
-BGR operator+(const BGR& lhs, const BGR& rhs) {
+inline BGR operator+(const BGR& lhs, const BGR& rhs) {
     BGR new_bgr = lhs;
     new_bgr += rhs;
     return new_bgr;
 }
 
-BGR operator-(const BGR& lhs, const BGR& rhs) {
+inline BGR operator-(const BGR& lhs, const BGR& rhs) {
     BGR new_bgr = lhs;
     new_bgr -= rhs;
     return new_bgr;
 }
 
-BGR operator*(const BGR& lhs, float rhs) {
+inline BGR operator*(const BGR& lhs, double rhs) {
     BGR new_bgr = lhs;
     new_bgr *= rhs;
     return new_bgr;
@@ -166,8 +151,9 @@ struct Bmp {
     void Read(const char* file_name) {
         std::ifstream file(file_name, std::ios_base::binary);
         if (!file.is_open()) {
-            throw std::runtime_error("Program failed to open file");
-            return;
+            std::string err = "Program failed to open file ";
+            err.append(file_name);
+            throw std::runtime_error(err);
         }
         file.read(reinterpret_cast<char*>(&bmp_header), sizeof(bmp_header));  // TODO: проверка всех входящих данных
         file.read(reinterpret_cast<char*>(&dib_header), sizeof(dib_header));
@@ -175,8 +161,8 @@ struct Bmp {
         data = Matrix<BGR>{dib_header.bitmap_height, dib_header.bitmap_width, BGR{}};
         uint8_t padding = ((dib_header.bits_per_pixel * dib_header.bitmap_width) / Consts::eight) % Consts::four;
         uint32_t trash_can{0};
-        for (size_t i = 0; i < data.GetRowsNum(); ++i) {
-            for (size_t j = 0; j < data.GetColsNum(); ++j) {
+        for (size_t i = 0; i != data.GetRowsNum(); ++i) {
+            for (size_t j = 0; j != data.GetColsNum(); ++j) {
                 IntBGR int_bgr;
                 file.read(reinterpret_cast<char*>(&int_bgr), sizeof(int_bgr));
                 data.At(i, j) = BGR{int_bgr};
@@ -188,20 +174,21 @@ struct Bmp {
     void Write(const char* file_name) {
         std::ofstream file(file_name, std::ios_base::binary);
         if (!file.is_open()) {
-            throw std::runtime_error("Program failed to open file");
-            return;
+            std::string err = "Program failed to open file ";
+            err.append(file_name);
+            throw std::runtime_error(err);
         }
         file.write(reinterpret_cast<char*>(&bmp_header), sizeof(bmp_header));  // TODO: проверка всех входящих данных
         file.write(reinterpret_cast<char*>(&dib_header), sizeof(dib_header));
         uint8_t padding =
             (Consts::four - ((dib_header.bits_per_pixel * dib_header.bitmap_width) / Consts::eight) % Consts::four) %
             Consts::four;
-        for (size_t i = 0; i < data.GetRowsNum(); ++i) {
-            for (size_t j = 0; j < data.GetColsNum(); ++j) {
+        for (size_t i = 0; i != data.GetRowsNum(); ++i) {
+            for (size_t j = 0; j != data.GetColsNum(); ++j) {
                 IntBGR int_bgr = data.At(i, j).ToInt();
                 file.write(reinterpret_cast<char*>(&int_bgr), sizeof(int_bgr));
             }
-            for (size_t k = 0; k < padding; ++k) {
+            for (size_t k = 0; k != static_cast<size_t>(padding); ++k) {
                 uint8_t zero = 0;
                 file.write(reinterpret_cast<char*>(&zero), sizeof(uint8_t));
             }

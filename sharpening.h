@@ -7,16 +7,16 @@ class SharpFilter : public Filter {
 public:
     explicit SharpFilter(const FilterDescriptor& fd) {
         if (fd.GetFilterName() != "sharp") {
-            throw std::exception();
+            throw std::runtime_error("Filter descriptor has incorrect name");
         }
         if (!fd.GetFilterParams().empty()) {
-            throw std::exception();
+            throw std::invalid_argument("Incorrect count of parameters for sharp filter.");
         }
     }
     void Apply(Bmp& bmp) override {
         Matrix<BGR> new_data{bmp.data.GetRowsNum(), bmp.data.GetColsNum(), {}};
-        for (size_t i = 0; i < bmp.data.GetRowsNum(); ++i) {
-            for (size_t j = 0; j < bmp.data.GetColsNum(); ++j) {
+        for (size_t i = 0; i != bmp.data.GetRowsNum(); ++i) {
+            for (size_t j = 0; j != bmp.data.GetColsNum(); ++j) {
                 new_data.At(i, j) = bmp.data.At(i, j) * coef_[1][1];
                 new_data.At(i, j) += bmp.data.At(i == 0 ? 0 : i - 1, j) * coef_[0][1];
                 new_data.At(i, j) += bmp.data.At(i == (bmp.data.GetRowsNum() - 1) ? i : i + 1, j) * coef_[2][1];
@@ -36,14 +36,13 @@ private:
     }
 
 private:
-    const float coef_[3][3] = {{0, -1, 0}, {-1, 5, -1}, {0, -1, 0}};
-    const float zero_ = 0;
-    const float one_ = 1;
+    const double coef_[3][3] = {{0, -1, 0}, {-1, 5, -1}, {0, -1, 0}};
+    const double zero_ = 0;
+    const double one_ = 1;
 };
 
-Filter* SharpFilterMaker(const FilterDescriptor& fd) {
-    Filter* pointer = new SharpFilter{fd};
-    return pointer;
+inline std::shared_ptr<Filter> SharpFilterMaker(const FilterDescriptor& fd) {
+    return std::make_shared<SharpFilter>(fd);
 }
 
 #endif

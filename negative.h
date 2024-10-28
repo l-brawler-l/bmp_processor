@@ -7,10 +7,10 @@ class NegFilter : public Filter {
 public:
     explicit NegFilter(const FilterDescriptor& fd) {
         if (fd.GetFilterName() != "neg") {
-            throw std::exception();
+            throw std::runtime_error("Filter descriptor has incorrect name");
         }
         if (!fd.GetFilterParams().empty()) {
-            throw std::exception();
+            throw std::invalid_argument("Incorrect count of parameters for negative filter.");
         }
     }
     void Apply(Bmp& bmp) override {
@@ -24,9 +24,8 @@ public:
     }
 };
 
-Filter* NegFilterMaker(const FilterDescriptor& fd) {
-    Filter* pointer = new NegFilter{fd};
-    return pointer;
+inline std::shared_ptr<Filter> NegFilterMaker(const FilterDescriptor& fd) {
+    return std::make_shared<NegFilter>(fd);
 }
 
 #endif
