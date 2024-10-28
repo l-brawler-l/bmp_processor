@@ -13,16 +13,9 @@ class EdgeFilter : public Filter {
 public:
     ~EdgeFilter() override {
     }
-    explicit EdgeFilter(const FilterDescriptor& fd) {
-        if (fd.GetFilterName() != "edge") {
-            throw std::runtime_error("Filter descriptor has incorrect name");
-        }
-        if (fd.GetFilterParams().size() != 1) {
-            throw std::invalid_argument("Incorrect count of parameters for edge filter.");
-        }
-        threshold_ = MakeDouble(fd.GetFilterParams()[0]);
-        FilterDescriptor gs_fd = {"gs"sv, {}};
-        gs_filter_ = std::make_shared<GsFilter>(gs_fd);
+    explicit EdgeFilter(double threshold) :
+        threshold_(threshold), 
+        gs_filter_(std::make_shared<GsFilter>(GsFilter())) {
     }
     void Apply(Bmp& bmp) override {
         gs_filter_->Apply(bmp);
@@ -41,15 +34,6 @@ public:
     }
 
 private:
-    double MakeDouble(std::string_view str) {
-        char * end;
-        double maybe = std::strtod(str.data(), &end);
-        if (end != str.data() + str.size()) {
-            throw std::invalid_argument("Parameters for edge filter must be double.");
-        }
-        return maybe;
-    }
-
     void Check(BGR& x) const {
         x.blue = x.blue > threshold_ ? 1 : 0;
         x.green = x.green > threshold_ ? 1 : 0;
@@ -63,7 +47,14 @@ private:
 };
 
 inline std::shared_ptr<Filter> EdgeFilterMaker(const FilterDescriptor& fd) {
-    return std::make_shared<EdgeFilter>(fd);
+    if (fd.GetFilterName() != "edge") {
+        throw std::runtime_error("Filter descriptor has incorrect name");
+    }
+    if (fd.GetFilterParams().size() != 1) {
+        throw std::invalid_argument("Incorrect count of parameters for edge filter.");
+    }
+    double threshold = TurnStringViewIntoDouble(fd.GetFilterParams()[0]);
+    return std::make_shared<EdgeFilter>(threshold);
 }
 
 #endif

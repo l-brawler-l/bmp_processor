@@ -5,14 +5,7 @@
 
 class NegFilter : public Filter {
 public:
-    explicit NegFilter(const FilterDescriptor& fd) {
-        if (fd.GetFilterName() != "neg") {
-            throw std::runtime_error("Filter descriptor has incorrect name");
-        }
-        if (!fd.GetFilterParams().empty()) {
-            throw std::invalid_argument("Incorrect count of parameters for negative filter.");
-        }
-    }
+    explicit NegFilter() {}
     void Apply(Bmp& bmp) override {
         for (size_t i = 0; i < bmp.data.GetRowsNum(); ++i) {
             for (size_t j = 0; j < bmp.data.GetColsNum(); ++j) {
@@ -25,7 +18,13 @@ public:
 };
 
 inline std::shared_ptr<Filter> NegFilterMaker(const FilterDescriptor& fd) {
-    return std::make_shared<NegFilter>(fd);
+    if (fd.GetFilterName() != "neg") {
+        throw std::runtime_error("Filter descriptor has incorrect name");
+    }
+    if (!fd.GetFilterParams().empty()) {
+        throw std::invalid_argument("Incorrect count of parameters for negative filter.");
+    }
+    return std::make_shared<NegFilter>(NegFilter());
 }
 
 #endif

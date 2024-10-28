@@ -8,14 +8,7 @@
 
 class GsFilter : public Filter {
 public:
-    explicit GsFilter(const FilterDescriptor& fd) {
-        if (fd.GetFilterName() != "gs") {
-            throw std::runtime_error("Filter descriptor has incorrect name");
-        }
-        if (!fd.GetFilterParams().empty()) {
-            throw std::invalid_argument("Incorrect count of parameters for grayscale filter.");
-        }
-    }
+    explicit GsFilter() {}
     void Apply(Bmp& bmp) override {
         for (size_t i = 0; i != bmp.data.GetRowsNum(); ++i) {
             for (size_t j = 0; j != bmp.data.GetColsNum(); ++j) {
@@ -33,7 +26,13 @@ private:
 };
 
 inline std::shared_ptr<Filter> GsFilterMaker(const FilterDescriptor& fd) {
-    return std::make_shared<GsFilter>(fd);
+    if (fd.GetFilterName() != "gs") {
+        throw std::runtime_error("Filter descriptor has incorrect name");
+    }
+    if (!fd.GetFilterParams().empty()) {
+        throw std::invalid_argument("Incorrect count of parameters for grayscale filter.");
+    }
+    return std::make_shared<GsFilter>(GsFilter());
 }
 
 #endif

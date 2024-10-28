@@ -8,6 +8,24 @@
 #include <vector>
 #include <map>
 
+inline double TurnStringViewIntoDouble(std::string_view str) {
+    char * end;
+    double maybe = std::strtod(str.data(), &end);
+    if (end != str.data() + str.size()) {
+        throw std::invalid_argument("Parameters for filter must be double.");
+    }
+    return maybe;
+}
+
+inline uint32_t TurnStringViewIntoInt(std::string_view str) {
+    char * end;
+    uint32_t maybe = static_cast<uint32_t>(std::strtoul(str.data(), &end, 10));
+    if (end != str.data() + str.size()) {
+        throw std::invalid_argument("Parameters for filter must be integer.");
+    }
+    return maybe;
+}
+
 class Filter {
 public:
     virtual void Apply(Bmp& bmp) = 0;
@@ -98,7 +116,7 @@ public:
     }
 
     std::unique_ptr<FilterPipeline> MakePipeline(const std::vector<FilterDescriptor>& fds) {
-        std::unique_ptr<FilterPipeline> fp(new FilterPipeline());
+        std::unique_ptr<FilterPipeline> fp = std::make_unique<FilterPipeline>(FilterPipeline());
         for (const FilterDescriptor& fd : fds) {
             std::shared_ptr<Filter> filter = MakeFilter(fd);
             if (!filter) {

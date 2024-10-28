@@ -6,24 +6,12 @@
 #include <memory>
 #include <stdexcept>
 #include <string_view>
-#include <charconv>
 
 #include "filter.h"
 
 class CropFilter : public Filter {
 public:
-    explicit CropFilter(const FilterDescriptor& fd) {
-        if (fd.GetFilterName() != "crop") {
-            throw std::runtime_error("Filter descriptor has incorrect name");
-        }
-        if (fd.GetFilterParams().size() != 2) {
-            throw std::invalid_argument("Incorrect count of parameters for crop filter.");
-        }
-        width_ = MakeInteger(fd.GetFilterParams()[0]);
-        height_ = MakeInteger(fd.GetFilterParams()[1]);
-        if (width_ <= 0 || height_ <= 0) {
-            throw std::invalid_argument("Parameters for crop filter must be positive integers.");
-        }
+    explicit CropFilter(uint32_t width, uint32_t height) : width_(width), height_(height) {
     }
     void Apply(Bmp& bmp) override {
         if (height_ > bmp.data.GetRowsNum()) {
@@ -45,24 +33,24 @@ public:
         bmp.bmp_header.size = bmp.dib_header.image_size + bmp.dib_header.header_size + sizeof(bmp.bmp_header);
         bmp.data = new_data;
     }
-
-private:
-    uint32_t MakeInteger(std::string_view str) {
-        uint32_t maybe = 0;
-        auto result = std::from_chars(str.data(), str.data() + str.size(), maybe);
-        if (result.ec == std::errc::invalid_argument) {
-            throw std::invalid_argument("Patameters for crop filter must be positive integers.");
-        }
-        return maybe;
-    }
-
 private:
     uint32_t width_;
     uint32_t height_;
 };
 
 inline std::shared_ptr<Filter> CropFilterMaker(const FilterDescriptor& fd) {
-    return std::make_shared<CropFilter>(fd);
+    if (fd.GetFilterName() != "crop") {
+        throw std::runtime_error("Filter descriptor has incorrect name");
+    }
+    if (fd.GetFilterParams().size() != 2) {
+        throw std::invalid_argument("Incorrect count of parameters for crop filter.");
+    }
+    uint32_t width = TurnStringViewIntoInt(fd.GetFilterParams()[0]);
+    uint32_t height = TurnStringViewIntoInt(fd.GetFilterParams()[1]);
+    if (width <= 0 || height <= 0) {
+        throw std::invalid_argument("Parameters for crop filter must be positive integers.");
+    }
+    return std::make_shared<CropFilter>(width, height);
 }
 
 #endif

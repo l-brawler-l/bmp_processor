@@ -5,14 +5,7 @@
 
 class SharpFilter : public Filter {
 public:
-    explicit SharpFilter(const FilterDescriptor& fd) {
-        if (fd.GetFilterName() != "sharp") {
-            throw std::runtime_error("Filter descriptor has incorrect name");
-        }
-        if (!fd.GetFilterParams().empty()) {
-            throw std::invalid_argument("Incorrect count of parameters for sharp filter.");
-        }
-    }
+    explicit SharpFilter() {}
     void Apply(Bmp& bmp) override {
         Matrix<BGR> new_data{bmp.data.GetRowsNum(), bmp.data.GetColsNum(), {}};
         for (size_t i = 0; i != bmp.data.GetRowsNum(); ++i) {
@@ -42,7 +35,13 @@ private:
 };
 
 inline std::shared_ptr<Filter> SharpFilterMaker(const FilterDescriptor& fd) {
-    return std::make_shared<SharpFilter>(fd);
+    if (fd.GetFilterName() != "sharp") {
+        throw std::runtime_error("Filter descriptor has incorrect name");
+    }
+    if (!fd.GetFilterParams().empty()) {
+        throw std::invalid_argument("Incorrect count of parameters for sharp filter.");
+    }
+    return std::make_shared<SharpFilter>(SharpFilter());
 }
 
 #endif
