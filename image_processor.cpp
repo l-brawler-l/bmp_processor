@@ -9,7 +9,6 @@
 #include "negative.h"
 #include "sharpening.h"
 #include "edge.h"
-#include "blur.h"
 
 void Test01(int argc, char** argv) {
     CmdLineParser xd{argc, argv};
@@ -54,7 +53,6 @@ int main(int argc, char** argv) {
     ff.AddFilterProducer({"neg", NegFilterMaker});
     ff.AddFilterProducer({"sharp", SharpFilterMaker});
     ff.AddFilterProducer({"edge", EdgeFilterMaker});
-    ff.AddFilterProducer({"blur", BlurFilterMaker});
     FilterPipeline* fp = ff.MakePipeline(clp.GetFilters());
     Bmp bmp;
     bmp.Read(clp.GetInputFile());

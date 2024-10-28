@@ -7,9 +7,11 @@
 
 #include <cmath>
 #include <cstdint>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <cstddef>
+#include <stdexcept>
 
 // В оперативной памяти большинства архитектур хранятся в формате little-endian (младшие байты по младшим адресам).
 // Например, число 298 будет храниться в виде 4 байт в шестнадцатиричной нотации: 2A 01 00 00.
@@ -164,6 +166,7 @@ struct Bmp {
     void Read(const char* file_name) {
         std::ifstream file(file_name, std::ios_base::binary);
         if (!file.is_open()) {
+            throw std::runtime_error("Program failed to open file");
             return;
         }
         file.read(reinterpret_cast<char*>(&bmp_header), sizeof(bmp_header));  // TODO: проверка всех входящих данных
@@ -185,6 +188,7 @@ struct Bmp {
     void Write(const char* file_name) {
         std::ofstream file(file_name, std::ios_base::binary);
         if (!file.is_open()) {
+            throw std::runtime_error("Program failed to open file");
             return;
         }
         file.write(reinterpret_cast<char*>(&bmp_header), sizeof(bmp_header));  // TODO: проверка всех входящих данных

@@ -1,3 +1,3 @@
-C:/se/cpp/ami-234-1-Ramil-Khamzin-brawler/tasks/image_processor/build/CMakeFiles/image_processor.dir
-C:/se/cpp/ami-234-1-Ramil-Khamzin-brawler/tasks/image_processor/build/CMakeFiles/ALL_BUILD.dir
-C:/se/cpp/ami-234-1-Ramil-Khamzin-brawler/tasks/image_processor/build/CMakeFiles/ZERO_CHECK.dir
+/home/brawler/se/cpp/bmp_processor/build/CMakeFiles/image_processor.dir
+/home/brawler/se/cpp/bmp_processor/build/CMakeFiles/edit_cache.dir
+/home/brawler/se/cpp/bmp_processor/build/CMakeFiles/rebuild_cache.dir
