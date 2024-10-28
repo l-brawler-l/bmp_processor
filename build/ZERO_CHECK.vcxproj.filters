@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\se\cpp\ami-234-1-Ramil-Khamzin-brawler\tasks\image_processor\build\CMakeFiles\fdc9a1c2372da4577ad30e53bb52a99a\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{F03E39DA-C099-3A98-A8F3-C6D4D3D18F62}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,14 @@
+add_executable(
+    image_processor
+    image_processor.cpp
+    cmd_line_parser.h
+    bmp.h
+    filter.h
+    matrix.h
+    crop.h
+    grayscale.h
+    negative.h
+    sharpening.h
+    edge.h
+    blur.h
+)
